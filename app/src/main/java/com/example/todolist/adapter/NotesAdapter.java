@@ -13,19 +13,29 @@ import com.example.todolist.Note;
 import com.example.todolist.R;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NotesViewHolder> {
 
-    private ArrayList<Note> notes = new ArrayList<>();
+    private List<Note> notes = new ArrayList<>();
+    private onNoteClickListener onNoteClickListener;
 
-    public void setNotes(ArrayList<Note> notes) {
+    public void setOnNoteClickListener(NotesAdapter.onNoteClickListener onNoteClickListener) {
+        this.onNoteClickListener = onNoteClickListener;
+    }
+
+    public List<Note> getNotes() {
+        return new ArrayList<>(notes); // Возвращаем копию данной коллекции
+    }
+
+    public void setNotes(List<Note> notes) {
         this.notes = notes;
         notifyDataSetChanged(); // Метод показывает что данные изменились и следует перериросовать список
     }
 
     @NonNull
     @Override
-    public NotesViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public NotesViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) { // Метод создания "Держателя" View в котором мы получаем View из макета
         View view = LayoutInflater.from(parent.getContext()).inflate(
                 R.layout.note_item,
                 parent,
@@ -54,14 +64,18 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NotesViewHol
         viewHolder.textViewNote.setBackgroundColor(color);
         viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-
+            public void onClick(View v) { // Когда мы создаем свои слушатели и вызываем у них определенные методы всегда необходимо добавлять проверку на null
+                if (onNoteClickListener != null) {
+                    onNoteClickListener.onNoteClick(note); // Никогда нельзя работать с базами данных в адаптере, адаптер отвечает только за работу с View элементами
+                }
             }
         });
     }
 
     @Override
-    public int getItemCount() { return notes.size(); }
+    public int getItemCount() {
+        return notes.size();
+    }
 
     class NotesViewHolder extends RecyclerView.ViewHolder {
 
@@ -72,4 +86,11 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NotesViewHol
             textViewNote = itemView.findViewById(R.id.textViewNote);
         }
     }
+
+    public interface onNoteClickListener {
+
+        void onNoteClick(Note note);
+    }
+
 }
+
