@@ -3,6 +3,7 @@ package com.example.todolist;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -14,6 +15,7 @@ import android.os.Looper;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.todolist.adapter.NotesAdapter;
 import com.example.todolist.database.NoteDatabase;
@@ -29,15 +31,25 @@ public class MainActivity extends AppCompatActivity {
     private FloatingActionButton buttonAddNote;
     private NotesAdapter notesAdapter;
 
-    private NoteDatabase noteDatabase;
+    private MainViewModel viewModel;
 
-    private Handler handler = new Handler(Looper.getMainLooper()); // Handler хранит ссылку на MainLooper - главный поток
+//    private Handler handler = new Handler(Looper.getMainLooper()); // Handler хранит ссылку на MainLooper - главный поток
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        noteDatabase = NoteDatabase.getInstance(getApplication());
+        viewModel = new MainViewModel(getApplication());
+        viewModel.getCount().observe(this, new Observer<Integer>() {
+            @Override
+            public void onChanged(Integer count) {
+                Toast.makeText(
+                        MainActivity.this,
+                        String.valueOf(count),
+                        Toast.LENGTH_LONG
+                ).show();
+            }
+        });
         initViews();
 
         notesAdapter = new NotesAdapter();
@@ -48,6 +60,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         recyclerViewNotes.setAdapter(notesAdapter); // set adapter to our RecyclerView
+
+        viewModel.getNotes().observe(this, new Observer<List<Note>>() {
+            @Override
+            public void onChanged(List<Note> notes) { // Каждый раз когда будут приходить какие-либо изменения будет вызываться этот метод куда прилетят данные из таблицы
+                notesAdapter.setNotes(notes);
+            }
+        });
 
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(
                 new ItemTouchHelper.SimpleCallback(
@@ -63,26 +82,12 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onSwiped( // Реализация такая же как просто при нажатии на элемент RecyclerView
-                            @NonNull RecyclerView.ViewHolder viewHolder,
-                            int direction
+                                          @NonNull RecyclerView.ViewHolder viewHolder,
+                                          int direction
                     ) {
                         int position = viewHolder.getAdapterPosition();
                         Note note = notesAdapter.getNotes().get(position);
-
-                        Thread thread = new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                noteDatabase.notesDao().remove(note.getId());
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        showNotes();
-                                    }
-                                });
-
-                            }
-                        });
-                        thread.start();
+                        viewModel.remove(note);
                     }
                 });
         itemTouchHelper.attachToRecyclerView(recyclerViewNotes);
@@ -101,26 +106,26 @@ public class MainActivity extends AppCompatActivity {
         buttonAddNote = findViewById(R.id.buttonAddNote);
     }
 
-    private void showNotes() {
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                List<Note> notes = noteDatabase.notesDao().getNotes();
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        notesAdapter.setNotes(notes);
-                    }
-                });
+//    private void showNotes() {
+//        Thread thread = new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                List<Note> notes = noteDatabase.notesDao().getNotes();
+//                handler.post(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        notesAdapter.setNotes(notes);
+//                    }
+//                });
+//
+//            }
+//        });
+//        thread.start();
+//    }
 
-            }
-        });
-        thread.start();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        showNotes();
-    }
+//    @Override
+//    protected void onResume() {
+//        super.onResume();
+//        showNotes();
+//    }
 }
