@@ -11,6 +11,8 @@ import com.example.todolist.Note;
 
 import java.util.List;
 
+import io.reactivex.rxjava3.core.Completable;
+
 @Dao // Data access object
 public interface NotesDao {
 
@@ -18,7 +20,7 @@ public interface NotesDao {
     LiveData<List<Note>> getNotes(); // Лучше не указывать какую-либо конкретную коллекцию  ... Если мы указали такой возвращаемый тип в интерфейсе Dao то запрос будет автоматически делаться в фоновом потоке
 
     @Insert // Можно написать стратегию при конфликтной ситуации
-    void add(Note note);
+    Completable add(Note note); // Если нужен ТОЛЬКО результат завершилась работа или нет - тогда пишем Completable (RxJava3)
 
     @Query("DELETE FROM notes WHERE id = :id")
     void remove(int id);
