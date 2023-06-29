@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -39,26 +40,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        viewModel = new MainViewModel(getApplication());
-        viewModel.getCount().observe(this, new Observer<Integer>() {
-            @Override
-            public void onChanged(Integer count) {
-                Toast.makeText(
-                        MainActivity.this,
-                        String.valueOf(count),
-                        Toast.LENGTH_LONG
-                ).show();
-            }
-        });
+        viewModel = new ViewModelProvider(this).get(MainViewModel.class);
         initViews();
 
         notesAdapter = new NotesAdapter();
-        notesAdapter.setOnNoteClickListener(new NotesAdapter.onNoteClickListener() {
-            @Override
-            public void onNoteClick(Note note) {
-
-            }
-        });
         recyclerViewNotes.setAdapter(notesAdapter); // set adapter to our RecyclerView
 
         viewModel.getNotes().observe(this, new Observer<List<Note>>() {
